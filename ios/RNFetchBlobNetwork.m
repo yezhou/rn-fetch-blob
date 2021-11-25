@@ -135,15 +135,16 @@ static void initialize_tables() {
 
 - (void) cancelRequest:(NSString *)taskId
 {
-    NSURLSessionDataTask * task;
+    //NSURLSessionDataTask * task;
     
     @synchronized ([RNFetchBlobNetwork class]) {
-        task = [self.requestsTable objectForKey:taskId].task;
+    //    task = [self.requestsTable objectForKey:taskId].task;
+        [[self.requestsTable objectForKey:taskId] cancelRequest:taskId];
     }
     
-    if (task && task.state == NSURLSessionTaskStateRunning) {
-        [task cancel];
-    }
+    //if (task && task.state == NSURLSessionTaskStateRunning) {
+   //     [task cancel];
+   // }
 }
 
 // removing case from headers

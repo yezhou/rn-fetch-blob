@@ -1,5 +1,6 @@
 package com.RNFetchBlob;
 
+import android.content.Intent;
 import android.content.res.AssetFileDescriptor;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
@@ -8,6 +9,7 @@ import android.os.Build;
 import android.os.Environment;
 import android.os.StatFs;
 import android.os.SystemClock;
+import android.provider.Settings;
 import android.util.Base64;
 
 import com.RNFetchBlob.Utils.PathResolver;
@@ -251,6 +253,16 @@ class RNFetchBlobFS {
         Map<String, Object> res = new HashMap<>();
 
         res.put("DocumentDir", ctx.getFilesDir().getAbsolutePath());
+        /*
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R)
+        {
+            res.put("DownloadDir", ctx.getExternalFilesDir(null).getAbsolutePath());
+        }
+        else
+        {
+            res.put("DownloadDir", Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath());
+        }
+        */
         res.put("CacheDir", ctx.getCacheDir().getAbsolutePath());
         res.put("DCIMDir", Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM).getAbsolutePath());
         res.put("PictureDir", Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).getAbsolutePath());
@@ -271,8 +283,22 @@ class RNFetchBlobFS {
               res.put("SDCardApplicationDir", "");
             }
         }
+        
         res.put("MainBundleDir", ctx.getApplicationInfo().dataDir);
-
+        /*
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R)
+        {
+            if (Environment.isExternalStorageManager()) {
+                //todo when permission is granted
+            } else {
+                //request for the permission
+                Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
+                Uri uri = Uri.fromParts("package", ctx.getPackageName(), null);
+                intent.setData(uri);
+                ctx.startActivity(intent);
+            }
+        }
+        */
         return res;
     }
 
