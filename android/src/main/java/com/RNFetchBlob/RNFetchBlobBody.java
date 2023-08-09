@@ -35,6 +35,7 @@ class RNFetchBlobBody extends RequestBody{
     private File bodyCache;
     int reported = 0;
     private Boolean chunkedEncoding = false;
+    private int startPoint = 0;
 
     RNFetchBlobBody(String taskId) {
         this.mTaskId = taskId;
@@ -42,6 +43,11 @@ class RNFetchBlobBody extends RequestBody{
 
     RNFetchBlobBody chunkedEncoding(boolean val) {
         this.chunkedEncoding = val;
+        return this;
+    }
+
+    RNFetchBlobBody setStartPoint(int val) {
+        this.startPoint = val;
         return this;
     }
 
@@ -163,7 +169,7 @@ class RNFetchBlobBody extends RequestBody{
         } else if (rawBody.startsWith(RNFetchBlobConst.CONTENT_PREFIX)) {
             String contentURI = rawBody.substring(RNFetchBlobConst.CONTENT_PREFIX.length());
             try {
-                return RNFetchBlob.RCTContext.getContentResolver().openInputStream(Uri.parse(contentURI));
+                return RNFetchBlob.RCTContext.getContentResolver().openInputStream(Uri.parse(contentURI)).skip(this.startPoint);
             } catch (Exception e) {
                 throw new Exception("error when getting request stream for content URI: " + contentURI, e);
             }

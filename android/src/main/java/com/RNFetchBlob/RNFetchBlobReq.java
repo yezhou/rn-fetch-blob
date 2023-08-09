@@ -302,56 +302,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
         OkHttpClient.Builder clientBuilder;
 
         try {
-            // use trusty SSL socket
-            if (this.options.trusty) {
-                clientBuilder = RNFetchBlobUtils.getUnsafeOkHttpClient(client);
-            } else {
-                clientBuilder = client.newBuilder();
-            }
-
-            // wifi only, need ACCESS_NETWORK_STATE permission
-            // and API level >= 21
-            if(this.options.wifiOnly){
-
-                boolean found = false;
-
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                    ConnectivityManager connectivityManager = (ConnectivityManager) RNFetchBlob.RCTContext.getSystemService(RNFetchBlob.RCTContext.CONNECTIVITY_SERVICE);
-                    Network[] networks = connectivityManager.getAllNetworks();
-
-                    for (Network network : networks) {
-
-                        NetworkInfo netInfo = connectivityManager.getNetworkInfo(network);
-                        NetworkCapabilities caps = connectivityManager.getNetworkCapabilities(network);
-
-                        if(caps == null || netInfo == null){
-                            continue;
-                        }
-
-                        if(!netInfo.isConnected()){
-                            continue;
-                        }
-
-                        if(caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)){
-                            clientBuilder.proxy(Proxy.NO_PROXY);
-                            clientBuilder.socketFactory(network.getSocketFactory());
-                            found = true;
-                            break;
-
-                        }
-                    }
-
-                    if(!found){
-                        callback.invoke("No available WiFi connections.", null, null);
-                        releaseTaskResource();
-                        return;
-                    }
-                }
-                else{
-                    RNFetchBlobUtils.emitWarningEvent("RNFetchBlob: wifiOnly was set, but SDK < 21. wifiOnly was ignored.");
-                }
-            }
-
+            clientBuilder = client.newBuilder();
             final Request.Builder builder = new Request.Builder();
             try {
                 builder.url(new URL(url));
@@ -366,16 +317,8 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                 while (it.hasNextKey()) {
                     String key = it.nextKey();
                     String value = headers.getString(key);
-                    if(key.equalsIgnoreCase("RNFB-Response")) {
-                        if(value.equalsIgnoreCase("base64"))
-                            responseFormat = ResponseFormat.BASE64;
-                        else if (value.equalsIgnoreCase("utf8"))
-                            responseFormat = ResponseFormat.UTF8;
-                    }
-                    else {
                         builder.header(key.toLowerCase(), value);
-                        mheaders.put(key.toLowerCase(), value);
-                    }
+                        mheaders.put(key.toLowerCase(), value); 
                 }
             }
 
@@ -413,12 +356,13 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
             }
 
             boolean isChunkedRequest = getHeaderIgnoreCases(mheaders, "Transfer-Encoding").equalsIgnoreCase("chunked");
-
+            int startPoint = Integer.parseInt(getHeaderIgnoreCases(mheaders, "Start-Point"));
             // set request body
             switch (requestType) {
                 case SingleFile:
                     requestBody = new RNFetchBlobBody(taskId)
                             .chunkedEncoding(isChunkedRequest)
+                            .setStartPoint(startPoint)
                             .setRequestType(requestType)
                             .setBody(rawRequestBody)
                             .setMIME(MediaType.parse(getHeaderIgnoreCases(mheaders, "content-type")));
@@ -454,13 +398,6 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
 
             // #156 fix cookie issue
             final Request req = builder.build();
-            clientBuilder.addNetworkInterceptor(new Interceptor() {
-                @Override
-                public Response intercept(Chain chain) throws IOException {
-                    redirects.add(chain.request().url().toString());
-                    return chain.proceed(chain.request());
-                }
-            });
             // Add request interceptor for upload progress event
             clientBuilder.addInterceptor(new Interceptor() {
                 @Override
@@ -515,11 +452,9 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
 
             clientBuilder.connectionPool(pool);
             clientBuilder.retryOnConnectionFailure(false);
-            clientBuilder.followRedirects(options.followRedirect);
-            clientBuilder.followSslRedirects(options.followRedirect);
             clientBuilder.retryOnConnectionFailure(true);
 
-            OkHttpClient client = enableTls12OnPreLollipop(clientBuilder).build();
+            OkHttpClient client =  clientBuilder.build();
 
             Call call =  client.newCall(req);
             taskTable.put(taskId, call);
@@ -890,41 +825,6 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
 
             }
         }
-    }
-
-    public static OkHttpClient.Builder enableTls12OnPreLollipop(OkHttpClient.Builder client) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN && Build.VERSION.SDK_INT <= Build.VERSION_CODES.KITKAT) {
-            try {
-                // Code from https://stackoverflow.com/a/40874952/544779
-                TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-                trustManagerFactory.init((KeyStore) null);
-                TrustManager[] trustManagers = trustManagerFactory.getTrustManagers();
-                if (trustManagers.length != 1 || !(trustManagers[0] instanceof X509TrustManager)) {
-                    throw new IllegalStateException("Unexpected default trust managers:" + Arrays.toString(trustManagers));
-                }
-                X509TrustManager trustManager = (X509TrustManager) trustManagers[0];
-                SSLContext sslContext = SSLContext.getInstance("SSL");
-                sslContext.init(null, new TrustManager[] { trustManager }, null);
-                SSLSocketFactory sslSocketFactory = sslContext.getSocketFactory();
-
-                client.sslSocketFactory(sslSocketFactory, trustManager);
-
-                ConnectionSpec cs = new ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS)
-                        .tlsVersions(TlsVersion.TLS_1_2)
-                        .build();
-
-                List< ConnectionSpec > specs = new ArrayList < > ();
-                specs.add(cs);
-                specs.add(ConnectionSpec.COMPATIBLE_TLS);
-                specs.add(ConnectionSpec.CLEARTEXT);
-
-                client.connectionSpecs(specs);
-            } catch (Exception exc) {
-                FLog.e("OkHttpClientProvider", "Error while enabling TLS 1.2", exc);
-            }
-        }
-
-        return client;
     }
 
 
