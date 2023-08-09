@@ -35,7 +35,7 @@ class RNFetchBlobBody extends RequestBody{
     private File bodyCache;
     int reported = 0;
     private Boolean chunkedEncoding = false;
-    private int startPoint = 0;
+    private long startPoint = 0;
 
     RNFetchBlobBody(String taskId) {
         this.mTaskId = taskId;
@@ -46,7 +46,7 @@ class RNFetchBlobBody extends RequestBody{
         return this;
     }
 
-    RNFetchBlobBody setStartPoint(int val) {
+    RNFetchBlobBody setStartPoint(long val) {
         this.startPoint = val;
         return this;
     }

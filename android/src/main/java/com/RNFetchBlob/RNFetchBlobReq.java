@@ -356,7 +356,8 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
             }
 
             boolean isChunkedRequest = getHeaderIgnoreCases(mheaders, "Transfer-Encoding").equalsIgnoreCase("chunked");
-            int startPoint = Integer.parseInt(getHeaderIgnoreCases(mheaders, "Start-Point"));
+            String startPoint_String = getHeaderIgnoreCases(mheaders, "Start-Point");
+            long startPoint = startPoint_String == "" ? 0L : Long.parseLong(startPoint_String);
             // set request body
             switch (requestType) {
                 case SingleFile:
