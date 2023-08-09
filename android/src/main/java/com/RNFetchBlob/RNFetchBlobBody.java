@@ -169,7 +169,9 @@ class RNFetchBlobBody extends RequestBody{
         } else if (rawBody.startsWith(RNFetchBlobConst.CONTENT_PREFIX)) {
             String contentURI = rawBody.substring(RNFetchBlobConst.CONTENT_PREFIX.length());
             try {
-                return RNFetchBlob.RCTContext.getContentResolver().openInputStream(Uri.parse(contentURI)).skip(this.startPoint);
+                InputStream in = RNFetchBlob.RCTContext.getContentResolver().openInputStream(Uri.parse(contentURI));
+                in.skip(this.startPoint);
+                return in;
             } catch (Exception e) {
                 throw new Exception("error when getting request stream for content URI: " + contentURI, e);
             }
