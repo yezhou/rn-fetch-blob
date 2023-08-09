@@ -150,7 +150,7 @@
 
                     __block NSString * cType = [[self class]getHeaderIgnoreCases:@"content-type" fromHeaders:mheaders];
                     // when content-type is application/octet* decode body string using BASE64 decoder
-                    if([[cType lowercaseString] hasPrefix:@"application/octet"] || [[cType lowercaseString] RNFBContainsString:@";base64"])
+                    if([[cType lowercaseString] hasPrefix:@"application/octet"] || [[cType lowercaseString] containsString:@";base64"])
                     {
                         __block NSString * ncType = [[cType stringByReplacingOccurrencesOfString:@";base64" withString:@""]stringByReplacingOccurrencesOfString:@";BASE64" withString:@""];
                         if([mheaders valueForKey:@"content-type"] != nil)

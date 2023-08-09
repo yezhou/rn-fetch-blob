@@ -238,7 +238,8 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                     req.setDescription(options.addAndroidDownloads.getString("description"));
                 }
                 if(options.addAndroidDownloads.hasKey("path")) {
-                    req.setDestinationUri(Uri.parse("file://" + options.addAndroidDownloads.getString("path")));
+                    req.setDestinationUri(Uri.fromFile(new File(options.addAndroidDownloads.getString("path"))));
+                   // req.setDestinationUri(Uri.parse("file://" + options.addAndroidDownloads.getString("path")));
                 }
                 // #391 Add MIME type to the request
                 if(options.addAndroidDownloads.hasKey("mime")) {
@@ -403,8 +404,10 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
             clientBuilder.addInterceptor(new Interceptor() {
                 @Override
                 public Response intercept(@NonNull Chain chain) throws IOException {
+                    Response originalResponse = null;
                     try {
-                        Response originalResponse = chain.proceed(req);
+                        //Response originalResponse = chain.proceed(req);
+                        originalResponse = chain.proceed(req);
                         ResponseBody extended;
                         switch (responseType) {
                             case KeepInMemory:
@@ -434,13 +437,22 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                     }
                     catch(SocketException e) {
                         timeout = true;
-                    }
-                    catch (SocketTimeoutException e ){
+                        if (originalResponse != null) {
+                            originalResponse.close();
+                        }
+                    } catch (SocketTimeoutException e) {
                         timeout = true;
                         //RNFetchBlobUtils.emitWarningEvent("RNFetchBlob error when sending request : " + e.getLocalizedMessage());
-                    } catch(Exception ex) {
-
+                        if (originalResponse != null) {
+                            originalResponse.close();
+                        }
+                        //ReactNativeBlobUtilUtils.emitWarningEvent("ReactNativeBlobUtil error when sending request : " + e.getLocalizedMessage());
+                    } catch (Exception ex) {
+                        if (originalResponse != null) {
+                            originalResponse.close();
+                        }
                     }
+
                     return chain.proceed(chain.request());
                 }
             });
@@ -748,8 +760,15 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
     }
 
     private void emitStateEvent(WritableMap args) {
-        RNFetchBlob.RCTContext.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
-                .emit(RNFetchBlobConst.EVENT_HTTP_STATE, args);
+        //RNFetchBlob.RCTContext.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+         //       .emit(RNFetchBlobConst.EVENT_HTTP_STATE, args);
+
+        try {
+            RNFetchBlob.RCTContext.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+                    .emit(RNFetchBlobConst.EVENT_HTTP_STATE, args);
+        } catch (Exception e) {
+            FLog.e("RNFetchBlobReq", "Error emitting state event", e);
+        }
     }
 
     @Override
@@ -768,8 +787,16 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                 Cursor c = dm.query(query);
                 // #236 unhandled null check for DownloadManager.query() return value
                 if (c == null) {
-                    this.callback.invoke("Download manager failed to download from  " + this.url + ". Query was unsuccessful ", null, null);
-                    return;
+
+                    try {
+                        this.callback.invoke("Download manager failed to download from  " + this.url + ". Query was unsuccessful ", null, null);
+                        return;
+                    }
+                    catch(Exception e) {
+                        return;
+                    }
+                   // this.callback.invoke("Download manager failed to download from  " + this.url + ". Query was unsuccessful ", null, null);
+                   // return;
                 }
 
                 String filePath = null;
@@ -779,8 +806,16 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                         // #297 handle failed request
                         int statusCode = c.getInt(c.getColumnIndex(DownloadManager.COLUMN_STATUS));
                         if(statusCode == DownloadManager.STATUS_FAILED) {
-                            this.callback.invoke("Download manager failed to download from  " + this.url + ". Status Code = " + statusCode, null, null);
-                            return;
+                            //this.callback.invoke("Download manager failed to download from  " + this.url + ". Status Code = " + statusCode, null, null);
+                            //return;
+
+                            try {
+                                this.callback.invoke("Download manager failed to download from " + this.url + ". Status Code = " + statusCode, null, null);
+                                return;
+                            }
+                            catch(Exception e) {
+                                return;
+                            }
                         }
                         String contentUri = c.getString(c.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI));
                         if ( contentUri != null &&
