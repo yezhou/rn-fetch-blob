@@ -6,17 +6,14 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.database.Cursor;
+import android.media.MediaScannerConnection;
 import android.net.Uri;
-import android.os.Build;
 import androidx.annotation.NonNull;
-import android.net.Network;
-import android.net.NetworkInfo;
-import android.net.NetworkCapabilities;
-import android.net.ConnectivityManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Base64;
+import android.util.Log;
 
 import com.RNFetchBlob.Response.RNFetchBlobDefaultResp;
 import com.RNFetchBlob.Response.RNFetchBlobFileResp;
@@ -30,11 +27,6 @@ import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
 
-import javax.net.ssl.TrustManagerFactory;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
-import javax.net.ssl.SSLContext;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -43,15 +35,11 @@ import java.net.MalformedURLException;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.URL;
-import java.net.Proxy;
 import java.nio.ByteBuffer;
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
-import java.security.KeyStore;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import java.util.HashMap;
 
 import java.util.concurrent.Executors;
@@ -59,11 +47,9 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import 	javax.net.ssl.SSLSocketFactory;
 
 import okhttp3.Call;
 import okhttp3.ConnectionPool;
-import okhttp3.ConnectionSpec;
 import okhttp3.Headers;
 import okhttp3.Interceptor;
 import okhttp3.MediaType;
@@ -72,7 +58,6 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
-import okhttp3.TlsVersion;
 import okio.BufferedSource;
 
 
@@ -649,6 +634,13 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                 }
                 else {
                     this.destPath = this.destPath.replace("?append=true", "");
+
+
+                    MediaScannerConnection.scanFile( RNFetchBlob.RCTContext.getApplicationContext(),
+                            new String[] { this.destPath}, null,
+                            (path1, uri) -> Log.i("TAG", "Finished scanning " + path1));
+
+
                     callback.invoke(null, RNFetchBlobConst.RNFB_RESPONSE_PATH, this.destPath);
                 }
 
