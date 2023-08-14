@@ -264,12 +264,13 @@ class RNFetchBlobFS {
         }
         */
 
-        res.put("DCIMDir", ctx.getExternalFilesDir(Environment.DIRECTORY_DCIM).getAbsolutePath());
-        res.put("PictureDir", ctx.getExternalFilesDir(Environment.DIRECTORY_PICTURES).getAbsolutePath());
-        res.put("MusicDir", ctx.getExternalFilesDir(Environment.DIRECTORY_MUSIC).getAbsolutePath());
-        res.put("DownloadDir", ctx.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath());
-        res.put("MovieDir", ctx.getExternalFilesDir(Environment.DIRECTORY_MOVIES).getAbsolutePath());
-        res.put("RingtoneDir", ctx.getExternalFilesDir(Environment.DIRECTORY_RINGTONES).getAbsolutePath());
+        //res.put("DCIMDir", ctx.getExternalFilesDir(Environment.DIRECTORY_DCIM).getAbsolutePath());
+        //res.put("PictureDir", ctx.getExternalFilesDir(Environment.DIRECTORY_PICTURES).getAbsolutePath());
+        //res.put("MusicDir", ctx.getExternalFilesDir(Environment.DIRECTORY_MUSIC).getAbsolutePath());
+       // res.put("DownloadDir", ctx.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath());
+        res.put("DownloadDir", Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath());
+        //res.put("MovieDir", ctx.getExternalFilesDir(Environment.DIRECTORY_MOVIES).getAbsolutePath());
+        //res.put("RingtoneDir", ctx.getExternalFilesDir(Environment.DIRECTORY_RINGTONES).getAbsolutePath());
         /*
         res.put("CacheDir", ctx.getCacheDir().getAbsolutePath());
         res.put("DCIMDir", Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM).getAbsolutePath());
