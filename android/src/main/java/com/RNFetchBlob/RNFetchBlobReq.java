@@ -101,7 +101,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
     public static HashMap<String, Long> androidDownloadManagerTaskTable = new HashMap<>();
     static HashMap<String, RNFetchBlobProgressConfig> progressReport = new HashMap<>();
     static HashMap<String, RNFetchBlobProgressConfig> uploadProgressReport = new HashMap<>();
-    static ConnectionPool pool = new ConnectionPool();
+    //static ConnectionPool pool = new ConnectionPool();
 
     RNFetchBlobConfig options;
     String taskId;
@@ -463,8 +463,8 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                 clientBuilder.readTimeout(options.timeout, TimeUnit.MILLISECONDS);
             }
 
-            clientBuilder.connectionPool(pool);
-            clientBuilder.retryOnConnectionFailure(false);
+            //clientBuilder.connectionPool(pool);
+            //clientBuilder.retryOnConnectionFailure(false);
             clientBuilder.retryOnConnectionFailure(true);
 
             OkHttpClient client =  clientBuilder.build();
