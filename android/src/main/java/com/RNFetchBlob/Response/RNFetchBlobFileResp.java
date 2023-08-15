@@ -58,8 +58,6 @@ public class RNFetchBlobFileResp extends ResponseBody {
                 f.createNewFile();
             ofStream = new FileOutputStream(new File(path), appendToExistingFile);
         }
-
-
     }
 
     @Override

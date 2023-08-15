@@ -7,8 +7,6 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import androidx.core.content.FileProvider;
-
-import android.os.Environment;
 import android.util.SparseArray;
 
 import com.facebook.react.bridge.ActivityEventListener;
@@ -44,7 +42,7 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
 
     static ReactApplicationContext RCTContext;
     private static LinkedBlockingQueue<Runnable> taskQueue = new LinkedBlockingQueue<>();
-    private static ThreadPoolExecutor threadPool = new ThreadPoolExecutor(7, 10, 5000, TimeUnit.MILLISECONDS, taskQueue);
+    private static ThreadPoolExecutor threadPool = new ThreadPoolExecutor(5, 10, 5000, TimeUnit.MILLISECONDS, taskQueue);
     static LinkedBlockingQueue<Runnable> fsTaskQueue = new LinkedBlockingQueue<>();
     private static ThreadPoolExecutor fsThreadPool = new ThreadPoolExecutor(2, 10, 5000, TimeUnit.MILLISECONDS, taskQueue);
     private static boolean ActionViewVisible = false;
@@ -358,18 +356,10 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
     @ReactMethod
     public void getContentIntent(String mime, Promise promise) {
         Intent i = new Intent(Intent.ACTION_GET_CONTENT);
-
         if(mime != null)
             i.setType(mime);
         else
-        {
-
-            Uri uri = Uri.parse(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getPath());
-            i.setDataAndType(uri,"*/*");
-            i.putExtra("android.provider.extra.INITIAL_URI", uri);
-            i.putExtra("android.content.extra.SHOW_ADVANCED", true);
-        }
-            //i.setType("*/*");
+            i.setType("*/*");
         promiseTable.put(GET_CONTENT_INTENT, promise);
         this.getReactApplicationContext().startActivityForResult(i, GET_CONTENT_INTENT, null);
 
