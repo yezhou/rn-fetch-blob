@@ -64,6 +64,7 @@ import 	javax.net.ssl.SSLSocketFactory;
 import okhttp3.Call;
 import okhttp3.ConnectionPool;
 import okhttp3.ConnectionSpec;
+import okhttp3.Dispatcher;
 import okhttp3.Headers;
 import okhttp3.Interceptor;
 import okhttp3.MediaType;
@@ -101,7 +102,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
     public static HashMap<String, Long> androidDownloadManagerTaskTable = new HashMap<>();
     static HashMap<String, RNFetchBlobProgressConfig> progressReport = new HashMap<>();
     static HashMap<String, RNFetchBlobProgressConfig> uploadProgressReport = new HashMap<>();
-    //static ConnectionPool pool = new ConnectionPool();
+    static ConnectionPool pool = new ConnectionPool(10,300,TimeUnit.SECONDS);
 
     RNFetchBlobConfig options;
     String taskId;
@@ -215,6 +216,13 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
             DownloadManager dm = (DownloadManager) appCtx.getSystemService(Context.DOWNLOAD_SERVICE);
             dm.remove(downloadManagerIdForTaskId);
         }
+    }
+
+    private static Dispatcher createDispatcher() {
+        final Dispatcher dispatcher = new Dispatcher(Executors.newCachedThreadPool());
+        dispatcher.setMaxRequests(64);
+        dispatcher.setMaxRequestsPerHost(64);
+        return dispatcher;
     }
 
     @Override
@@ -463,7 +471,8 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                 clientBuilder.readTimeout(options.timeout, TimeUnit.MILLISECONDS);
             }
 
-            //clientBuilder.connectionPool(pool);
+            clientBuilder.connectionPool(pool);
+            clientBuilder.dispatcher(createDispatcher());
             //clientBuilder.retryOnConnectionFailure(false);
             clientBuilder.retryOnConnectionFailure(true);
 
