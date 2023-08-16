@@ -263,7 +263,10 @@ class RNFetchBlobFS {
             res.put("DownloadDir", Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath());
         }
         */
+        res.put("DCIMDir", ctx.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath());
 
+        res.put("DownloadDir", Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath());
+    /*
         res.put("DCIMDir", ctx.getExternalFilesDir(Environment.DIRECTORY_DCIM).getAbsolutePath());
         res.put("PictureDir", ctx.getExternalFilesDir(Environment.DIRECTORY_PICTURES).getAbsolutePath());
         res.put("MusicDir", ctx.getExternalFilesDir(Environment.DIRECTORY_MUSIC).getAbsolutePath());
