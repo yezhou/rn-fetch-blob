@@ -18,7 +18,6 @@
 #import "RCTLog.h"
 #endif
 
-#import "IOS7Polyfill.h"
 #import <CommonCrypto/CommonDigest.h>
 
 NSMapTable * taskTable;

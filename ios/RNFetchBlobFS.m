@@ -10,7 +10,6 @@
 #import "RNFetchBlob.h"
 #import "RNFetchBlobFS.h"
 #import "RNFetchBlobConst.h"
-#import "IOS7Polyfill.h"
 @import AssetsLibrary;
 
 #import <CommonCrypto/CommonDigest.h>
