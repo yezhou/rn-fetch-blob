@@ -556,6 +556,11 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
     @RequiresApi(api = Build.VERSION_CODES.Q)
     public static Uri copyFileToDownloads(File downloadedFile) {
 
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q)
+        {
+            return null;
+        }
+
         Context appCtx = RNFetchBlob.RCTContext.getApplicationContext();
         ContentResolver resolver = appCtx.getContentResolver();
 
@@ -876,6 +881,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                 String filePath = null;
 
                 /*
+
                 try {
                     // the file exists in media content database
                     if (c.moveToFirst()) {
