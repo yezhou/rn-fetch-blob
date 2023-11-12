@@ -564,7 +564,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
         Context appCtx = RNFetchBlob.RCTContext.getApplicationContext();
         ContentResolver resolver = appCtx.getContentResolver();
 
-        String relative_path =  downloadedFile.getParent().replace(appCtx.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS).getPath(), "/ctfile/");
+        String relative_path =  downloadedFile.getParent().replace(appCtx.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS).getPath(), "/ctfile");
 
             ContentValues contentValues = new ContentValues();
             contentValues.put(MediaStore.MediaColumns.DISPLAY_NAME, getName(downloadedFile));
