@@ -267,6 +267,7 @@ class RNFetchBlobFS {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
         {
             res.put("DownloadDir", ctx.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath());
+            res.put("CacheDir", ctx.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath());
         }
         else
         {

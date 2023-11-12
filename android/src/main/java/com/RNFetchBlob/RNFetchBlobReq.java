@@ -929,7 +929,11 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                         if(!exists)
                             throw new Exception("Download manager download failed, the file does not downloaded to destination.");
                         else
+                        {
+                            copyFileToDownloads(new File(customDest));
                             this.callback.invoke(null, RNFetchBlobConst.RNFB_RESPONSE_PATH, customDest);
+                        }
+
 
                     } catch(Exception ex) {
                         ex.printStackTrace();
@@ -941,7 +945,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                         this.callback.invoke("Download manager could not resolve downloaded file path.", RNFetchBlobConst.RNFB_RESPONSE_PATH, null);
                     else
                     {
-                        copyFileToDownloads(new File(filePath));
+
                         this.callback.invoke(null, RNFetchBlobConst.RNFB_RESPONSE_PATH, filePath);
                     }
                 }
