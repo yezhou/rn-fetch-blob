@@ -9,11 +9,8 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
 import androidx.annotation.NonNull;
-import android.net.Network;
-import android.net.NetworkInfo;
-import android.net.NetworkCapabilities;
-import android.net.ConnectivityManager;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Base64;
@@ -30,10 +27,6 @@ import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
 
-import javax.net.ssl.TrustManagerFactory;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
-import javax.net.ssl.SSLContext;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -43,15 +36,11 @@ import java.net.MalformedURLException;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.URL;
-import java.net.Proxy;
 import java.nio.ByteBuffer;
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
-import java.security.KeyStore;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import java.util.HashMap;
 
 import java.util.concurrent.Executors;
@@ -59,11 +48,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import 	javax.net.ssl.SSLSocketFactory;
-
 import okhttp3.Call;
 import okhttp3.ConnectionPool;
-import okhttp3.ConnectionSpec;
 import okhttp3.Dispatcher;
 import okhttp3.Headers;
 import okhttp3.Interceptor;
@@ -73,11 +59,22 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
-import okhttp3.TlsVersion;
 import okio.BufferedSource;
+import android.content.ContentResolver;
+import android.content.ContentValues;
+import android.provider.MediaStore;
 
+import androidx.annotation.RequiresApi;
+import androidx.core.content.FileProvider;
+
+import java.io.BufferedInputStream;
+import java.io.FileInputStream;
+import java.io.OutputStream;
 
 public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
+
+    // This will be used only on Android P-
+    private static final File DOWNLOAD_DIR = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
 
     enum RequestType  {
         Form,
@@ -555,10 +552,73 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
             scheduledExecutorService.shutdown();
     }
 
+
+    @RequiresApi(api = Build.VERSION_CODES.Q)
+    public static Uri copyFileToDownloads(File downloadedFile) {
+
+        Context appCtx = RNFetchBlob.RCTContext.getApplicationContext();
+        ContentResolver resolver = appCtx.getContentResolver();
+
+        String relative_path =  downloadedFile.getParent().replace(appCtx.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS).getPath(), "/ctfile/");
+
+            ContentValues contentValues = new ContentValues();
+            contentValues.put(MediaStore.MediaColumns.DISPLAY_NAME, getName(downloadedFile));
+            contentValues.put(MediaStore.MediaColumns.MIME_TYPE, getMimeType(downloadedFile));
+            contentValues.put(MediaStore.MediaColumns.SIZE, getFileSize(downloadedFile));
+            contentValues.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + relative_path);
+
+            Uri downloadedUri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, contentValues);
+
+            if (downloadedUri != null) {
+                try {
+                    copyFileContent(downloadedFile, resolver.openOutputStream(downloadedUri));
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            return downloadedUri;
+
+    }
+
+    private static void copyFileContent(File sourceFile, OutputStream outputStream) throws IOException {
+        byte[] buffer = new byte[1024];
+        int length;
+
+        try (BufferedInputStream bufferedInputStream = new BufferedInputStream(new FileInputStream(sourceFile))) {
+            while ((length = bufferedInputStream.read(buffer)) != -1) {
+                outputStream.write(buffer, 0, length);
+            }
+            outputStream.flush();
+        } finally {
+            if (outputStream != null) {
+                try {
+                    outputStream.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+    private static String getName(File file) {
+        return file.getName();
+    }
+
+    private static String getMimeType(File file) {
+        // Replace this with logic to determine MIME type based on file extension or other criteria
+        return "application/octet-stream";
+    }
+
+    private static long getFileSize(File file) {
+        return file.length();
+    }
+
     /**
      * Send response data back to javascript context.
      * @param resp OkHttp response object
      */
+    @RequiresApi(api = Build.VERSION_CODES.Q)
     private void done(Response resp) {
         boolean isBlobResp = isBlobResponse(resp);
         emitStateEvent(getResponseInfo(resp, isBlobResp));
@@ -659,7 +719,9 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                     callback.invoke("Download interrupted.", null);
                 }
                 else {
+
                     this.destPath = this.destPath.replace("?append=true", "");
+                    copyFileToDownloads(new File(this.destPath));
                     callback.invoke(null, RNFetchBlobConst.RNFB_RESPONSE_PATH, this.destPath);
                 }
 
@@ -782,6 +844,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
         }
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.Q)
     @Override
     public void onReceive(Context context, Intent intent) {
         String action = intent.getAction();
@@ -811,6 +874,8 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                 }
 
                 String filePath = null;
+
+                /*
                 try {
                     // the file exists in media content database
                     if (c.moveToFirst()) {
@@ -848,6 +913,8 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                     }
                 }
 
+                 */
+
                 // When the file is not found in media content database, check if custom path exists
                 if (options.addAndroidDownloads.hasKey("path")) {
                     try {
@@ -867,7 +934,10 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                     if(filePath == null)
                         this.callback.invoke("Download manager could not resolve downloaded file path.", RNFetchBlobConst.RNFB_RESPONSE_PATH, null);
                     else
+                    {
+                        copyFileToDownloads(new File(filePath));
                         this.callback.invoke(null, RNFetchBlobConst.RNFB_RESPONSE_PATH, filePath);
+                    }
                 }
 
             }
