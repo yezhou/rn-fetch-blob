@@ -364,12 +364,15 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
             boolean isChunkedRequest = getHeaderIgnoreCases(mheaders, "Transfer-Encoding").equalsIgnoreCase("chunked");
             String startPoint_String = getHeaderIgnoreCases(mheaders, "Start-Point");
             long startPoint = startPoint_String == "" ? 0L : Long.valueOf(startPoint_String);
+            String chunkedLength_String = getHeaderIgnoreCases(mheaders, "Chunked-Length");
+            long chunkedLength = chunkedLength_String == "" ? 0L : Long.valueOf(chunkedLength_String);
             // set request body
             switch (requestType) {
                 case SingleFile:
                     requestBody = new RNFetchBlobBody(taskId)
                             .chunkedEncoding(isChunkedRequest)
                             .setStartPoint(startPoint)
+                            .setChunkedLength(chunkedLength)
                             .setRequestType(requestType)
                             .setBody(rawRequestBody)
                             .setMIME(MediaType.parse(getHeaderIgnoreCases(mheaders, "content-type")));

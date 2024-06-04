@@ -51,6 +51,11 @@ class RNFetchBlobBody extends RequestBody{
         return this;
     }
 
+    RNFetchBlobBody setChunkedLength(long val) {
+        this.contentLength = val;
+        return this;
+    }
+
     RNFetchBlobBody setMIME(MediaType mime) {
         this.mime = mime;
         return this;
@@ -76,7 +81,7 @@ class RNFetchBlobBody extends RequestBody{
             switch (requestType) {
                 case SingleFile:
                     requestStream = getRequestStream();
-                    contentLength = requestStream.available();
+                   // contentLength = requestStream.available();
                     break;
                 case AsIs:
                     contentLength = this.rawBody.getBytes().length;
